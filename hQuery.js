@@ -23,11 +23,10 @@
             }
 
             if (selector.constructor === H) {
-                Object.assign(this, selector)
-                return this
+                return selector
             }
 
-            // HANDLE: H(DOMElement)
+            // HANDLE: h(DOMElement)
             if (selector.nodeType) {
                 this[0] = selector
                 this.length = 1
@@ -131,6 +130,12 @@
         return ret
     }
 
+    H.prototype.slice = function() {
+        let ret = [].slice.apply(this, arguments)
+        ret.prevObject = this
+        return ret
+    }
+
     H.prototype.filter = function (fn) {
         let index = 0;
         let ret = new H()
@@ -146,7 +151,7 @@
     }
 
     H.prototype.end = function () {
-        return this.prevObject
+        return this.prevObject ? this.prevObject : this
     }
 
     // html methods
@@ -199,13 +204,7 @@
     H.prototype.append = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (typeof html === 'string') {
-                let temp = document.createElement('div');
-                temp.innerHTML = html;
-                let frag = document.createDocumentFragment();
-                while (temp.firstChild) {
-                    frag.appendChild(temp.firstChild);
-                }
-                this[i].append(frag);
+                this[i].insertAdjacentHTML('beforeend', html)
             }
             else {
                 this[i].append(...arguments);
@@ -217,13 +216,7 @@
     H.prototype.prepend = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (typeof html === 'string') {
-                let temp = document.createElement('div');
-                temp.innerHTML = html;
-                let frag = document.createDocumentFragment();
-                while (temp.firstChild) {
-                    frag.appendChild(temp.firstChild);
-                }
-                this[i].prepend(frag);
+                this[i].insertAdjacentHTML('afterbegin', html)
             }
             else {
                 this[i].prepend(...arguments);
@@ -334,6 +327,17 @@
         return this
     }
 
+    H.prototype.one = function (event, handler) {
+        for (let i = 0; i < this.length; i++) {
+            let fn = (e) => {
+                handler(e)
+                this[i].removeEventListener(event, fn);
+            }
+            this[i].addEventListener(event, fn);
+        }
+        return this
+    }
+
 
     // other methods
     H.prototype.each = function (fn) {
@@ -344,8 +348,7 @@
         return this
     }
 
-    // extend method on instance or prototype
-    H.extend = H.prototype.extend = function (name, fn) {
+    H.extend = function (name, fn) {
         if (arguments.length === 2) {
             H.prototype[name] = fn
         } else {
@@ -354,5 +357,18 @@
             }
         }
     }
+
+    
+    // Ajex methods
+    H.get = function (url, callback) {
+        // TODO:
+    }
+
+    H.post = function (url, callback) {
+
+    }
+
+    // Animations
+
 
 })(window, document);

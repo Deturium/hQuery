@@ -35,7 +35,7 @@ h('#id li')
 
 h.extend({
   "method1": func1,
-  "nethod2": func2
+  "method2": func2
 })
 	
 </script>

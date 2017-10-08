@@ -12,16 +12,16 @@
     /**
      * hQuery构造函数，可以直接h()调用
      * @class
-     * @param {String|DOM} selector - 将querySelectAll的选择器
-     * @param {DOM=} [context = document] - 作为选择器的起点
-     * @return {H} - 返回hQuery对象
+     * @param {String|DOM} selector - querySelectAll的选择器
+     * @param {DOM=} [context = document] - 选择器的根节点
+     * @return {hQuery} - hQuery对象
      */
-    function H(selector, context) {
-        return new H.prototype.init(selector, context)
+    function hQuery(selector, context) {
+        return new hQuery.prototype.init(selector, context)
     }
 
-    H.prototype = {
-        constructor: H,
+    hQuery.prototype = {
+        constructor: hQuery,
         length: 0,
         prevObject: null,
 
@@ -30,7 +30,7 @@
                 return this
             }
 
-            if (selector.constructor === H) {
+            if (selector.constructor === hQuery) {
                 return selector
             }
 
@@ -49,81 +49,78 @@
         }
     }
 
-    H.prototype.init.prototype = H.prototype
+    hQuery.prototype.init.prototype = hQuery.prototype
 
-    /**
-     * 将hQuery挂载在window对象上
-     * @global
-     */
-    w.hQuery = H
+    // 将hQuery挂载在window对象上
+    w.hQuery = hQuery
 
     // selector methods
 
     /**
      * 以当前对象的第一个节点为根节点，返回符合选择器的子节点
-     * @param {string} selector 选择器
-     * @return {H} 全新的hQuey对象
+     * @param {string} selector - 选择器
+     * @return {hQuery} - 全新的hQuey对象
      */
-    H.prototype.find = function (selector) {
-        let ret = new H(selector, this[0])
+    hQuery.prototype.find = function (selector) {
+        let ret = new hQuery(selector, this[0])
         ret.prevObject = this
         return ret
     }
 
     /**
-     * 返回被选中的第一个节点
-     * @return {H} 全新的hQuey对象
+     * 返回hQuery对象中的第一个节点
+     * @return {hQuery} - 全新的hQuey对象
      */
-    H.prototype.first = function () {
-        let ret = new H(this[0])
-        ret.prevObject = this
-        return ret
+    hQuery.prototype.first = function () {
+        return this.eq(0)
     }
 
     /**
-     * 返回被选中的最后一个节点
-     * @return {H} 全新的hQuery对象
+     * 返回hQuery对象中的最后一个节点
+     * @return {hQuery} - 全新的hQuery对象
      */
-    H.prototype.last = function () {
-        let ret = new H(this[this.length-1])
-        ret.prevObject = this
-        return ret
+    hQuery.prototype.last = function () {
+        return this.eq(-1)
     }
 
     /**
-     * 返回被选中的第n个节点
+     * 返回hQuery对象中的第n个节点
      * @param {number} num - 从0开始指定第num个节点，可接受负数
-     * @return {H} 全新的hQuery对象
+     * @return {hQuery} - 全新的hQuery对象
      */
-    H.prototype.eq = function (num) {
-        num = num > 0 ? num : this.length - num
-        let ret = new H(this[num])
+    hQuery.prototype.eq = function (num) {
+        num = num < 0 ? this.length - num : num
+        let ret = new hQuery(this[num])
         ret.prevObject = this
         return ret
     }
 
     /**
-     * 返回第一个节点的父节点
-     * @return {H} 全新的hQuery对象
+     * 返回hQuery对象中每一个节点的父节点集合
+     * @return {hQuery} - 全新的hQuery对象
      */ 
-    H.prototype.parent = function () {
-        let ret = new H(this[0].parentNode)
+    hQuery.prototype.parent = function () {
+        let ret = new hQuery()
+        for (let i = 0; i <  this.length; i++) {
+            ret[i] = this[i].parentNode
+        }
         ret.prevObject = this
         return ret
     }
 
     /**
-     * 返回第一个节点的所有子节点
-     * @return {H} 全新的hQuery对象
+     * 返回hQuery对象中第一个节点的直接子节点
+     * @param {number=} - 指定第几个子节点
+     * @return {hQuery} - 全新的hQuery对象
      */     
-    H.prototype.children = function (num) {
+    hQuery.prototype.children = function (num) {
         let ret;
         let children = this[0].children
         if (num !== undefined) {
-            num = num > 0 ? num : children.length - num
-            ret = new H(children[num])
+            num = num < 0 ? children.length - num : num
+            ret = new hQuery(children[num])
         } else {
-            ret = new H()
+            ret = new hQuery()
             for (let i = 0; i < children.length; i++) {
                 ret[i] = children[i]
             }
@@ -134,18 +131,14 @@
     }
     
     /**
-     * 返回所有节点的下一个兄弟节点集合，忽略文本节点
-     * @return {H} 全新的hQuery对象
+     * 返回hQuery对象中所有节点的下一个兄弟节点的集合
+     * @return {hQuery} - 全新的hQuery对象
      */  
-    H.prototype.next = function () {
+    hQuery.prototype.next = function () {
         let index = 0;
-        let ret = new H()
+        let ret = new hQuery()
         for (let i = 0; i < this.length; i++) {
-            let sibling = this[i].nextSibling
-            // ignore TEXT_NODE
-            while (sibling && sibling.nodeType === 3) {
-                sibling = sibling.nextSibling
-            }
+            let sibling = this[i].nextElementSibling
             if (sibling) {
                 ret[index++] = sibling
             }
@@ -156,17 +149,14 @@
     }
 
     /**
-     * 返回所有节点的前一个兄弟节点集合，忽略文本节点
-     * @return {H} 全新的hQuery对象
+     * 返回hQuery对象中所有节点的上一个兄弟节点的集合
+     * @return {hQuery} - 全新的hQuery对象
      */  
-    H.prototype.prev = function () {
+    hQuery.prototype.prev = function () {
         let index = 0;
-        let ret = new H()
+        let ret = new hQuery()
         for (let i = 0; i < this.length; i++) {
-            let sibling = this[i].previousSibling
-            while (sibling && sibling.nodeType === 3) {
-                sibling = sibling.previousSibling
-            }
+            let sibling = this[i].previousElementSibling
             if (sibling) {
                 ret[index++] = sibling
             }
@@ -180,9 +170,9 @@
      * 返回[start, end)的节点集合
      * @param {number} start - 起点
      * @param {number} end - 终点
-     * @return {H} 全新的hQuery对象
+     * @return {hQuery} - 全新的hQuery对象
      */  
-    H.prototype.slice = function (start, end) {
+    hQuery.prototype.slice = function (start, end) {
         let ret = [].slice.apply(this, arguments)
         ret.prevObject = this
         return ret
@@ -191,11 +181,11 @@
     /**
      * 返回满足筛选函数的节点
      * @param {function} fn - 用作筛选的函数，应返回boolean值
-     * @return {H} 全新的hQuery对象
+     * @return {hQuery} - 全新的hQuery对象
      */  
-    H.prototype.filter = function (fn) {
+    hQuery.prototype.filter = function (fn) {
         let index = 0;
-        let ret = new H()
+        let ret = new hQuery()
         for (let i = 0; i < this.length; i++) {
             let val = fn.call(this[i], i, this[i])
             if (val) {
@@ -209,22 +199,22 @@
 
     /**
      * 回溯到链上的上一个hQuery对象
-     * @return {H} 全新的hQuery对象
+     * @return {hQuery} 全新的hQuery对象
      * @example
      * h('#id').find('.class').end() // 会被回溯到h('#id')
      */  
-    H.prototype.end = function () {
-        return this.prevObject ? this.prevObject : this
+    hQuery.prototype.end = function () {
+        return this.prevObject || this
     }
 
     // html methods
 
     /**
      * 返回或者设置节点的html
-     * @param {string=} html - 将要设置的html值
-     * @return {string|H} 返回html内容或者自身
+     * @param {string=} html - 要设置的html
+     * @return {string|hQuery} - 返回html内容或者自身
      */  
-    H.prototype.html = function (html) {
+    hQuery.prototype.html = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (html === undefined) {
                 return this[0].innerHTML
@@ -237,9 +227,9 @@
     /**
      * 返回或者设置节点的text
      * @param {string=} text - 将要设置的text值
-     * @return {string|H} 返回text内容或者自身
+     * @return {string|hQuery} - 返回text内容或者自身
      */  
-    H.prototype.text = function (text) {
+    hQuery.prototype.text = function (text) {
         for (let i = 0; i < this.length; i++) {
             if (text === undefined) {
                 return this[0].textContent
@@ -251,10 +241,10 @@
 
     /**
      * 返回或者设置节点的value
-     * @param {string=} value - 将要设置的value值
-     * @return {string|H} 返回value内容或者自身
+     * @param {string=} value - 要设置的value
+     * @return {string|hQuery} - 返回value内容或者自身
      */  
-    H.prototype.val = function (val) {
+    hQuery.prototype.val = function (val) {
         for (let i = 0; i < this.length; i++) {
             if (val === undefined) {
                 return this[0].value
@@ -266,11 +256,11 @@
 
     /**
      * 返回或者设置节点的属性
-     * @param {string|object} attr - 想取得或者将要设置的attr值，可直接传入{ attr: value }的对象
+     * @param {string|object} attr - 想取得或者将要设置的attr值，可传入{ attr: value }的对象
      * @param {string=} value - 要设置的attr值
-     * @return {string|H} 返回属性值或者自身
+     * @return {string|hQuery} - 返回属性值或者自身
      */  
-    H.prototype.attr = function (attr, val) {
+    hQuery.prototype.attr = function (attr, val) {
         for (let i = 0; i < this.length; i++) {
             if (typeof attr === 'string') {
                 if (arguments.length === 1) {
@@ -288,10 +278,10 @@
 
     /**
      * 在节点的子节点末尾添加html
-     * @param {string|DOM} - 想要添加的html或者节点，DOM可以传入多个
-     * @return {H} - 返回自身
+     * @param {string|DOM} - 要添加的html或者节点，DOM可传入多个
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.append = function (html) {
+    hQuery.prototype.append = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (typeof html === 'string') {
                 this[i].insertAdjacentHTML('beforeend', html)
@@ -305,10 +295,10 @@
     
     /**
      * 在节点的子节点开头添加html
-     * @param {string|DOM} - 想要添加的html或者节点，DOM可以传入多个
-     * @return {H} - 返回自身
+     * @param {string|DOM} - 要添加的html或者节点，DOM可传入多个
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.prepend = function (html) {
+    hQuery.prototype.prepend = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (typeof html === 'string') {
                 this[i].insertAdjacentHTML('afterbegin', html)
@@ -321,10 +311,10 @@
     }
 
     /**
-     * 删除节点
-     * @return {H} - 返回自身
+     * 删除所有节点
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.remove = function () {
+    hQuery.prototype.remove = function () {
         for (let i = 0; i < this.length; i++) {
             this[i].remove()
         }
@@ -333,10 +323,10 @@
 
     /**
      * 替代当前节点
-     * @param {string|DOM} - 用以替换的html或者节点，DOM可以传入多个
-     * @return {H} - 返回自身
+     * @param {string|DOM} - 用以替换的html或者DOM，DOM可传入多个
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.replaceWith = function (html) {
+    hQuery.prototype.replaceWith = function (html) {
         for (let i = 0; i < this.length; i++) {
             if (typeof html === 'string') {
                 this[i].outerHTML = html
@@ -349,9 +339,9 @@
 
     /**
      * 隐藏节点
-     * @return {H} - 返回自身
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.hide = function () {
+    hQuery.prototype.hide = function () {
         for (let i = 0; i < this.length; i++) {
             this[i].style.display = 'none'
         }
@@ -360,9 +350,9 @@
 
     /**
      * 显示节点
-     * @return {H} - 返回自身
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.show = function () {
+    hQuery.prototype.show = function () {
         for (let i = 0; i < this.length; i++) {
             this[i].style.display = ''
         }
@@ -371,9 +361,9 @@
 
     /**
      * 切换隐藏和显示的状态
-     * @return {H} - 返回自身
+     * @return {hQuery} - 返回自身
      */
-    H.prototype.toggle = function () {
+    hQuery.prototype.toggle = function () {
         for (let i = 0; i < this.length; i++) {
             this[i].style.display = this[i].style.display === 'none' ? '' : 'none'
         }
@@ -385,11 +375,11 @@
 
     /**
      * 返回或者设置节点的css
-     * @param {string|object} attr - 想取得或者将要设置的css值，可直接传入{ attr: value }的对象
+     * @param {string|object} attr - 取得或者将要设置的css值，可传入{ attr: value }的对象
      * @param {string=} value - 要设置的css值
-     * @return {string|H} 返回属性值或者自身
+     * @return {string|hQuery} - 返回属性值或者自身
      */  
-    H.prototype.css = function (attr, val) {c
+    hQuery.prototype.css = function (attr, val) {c
         for (let i = 0; i < this.length; i++) {
             if (typeof attr === 'string') {
                 if (arguments.length === 1) {
@@ -410,16 +400,16 @@
      * @param {string} className - 检测的类名
      * @return {boolean}
      */  
-    H.prototype.hasClass = function (className) {
+    hQuery.prototype.hasClass = function (className) {
         return this[0].classList.contains(className)
     }
 
     /**
      * 为节点添加class
-     * @param {string} className - 想增加的类名
-     * @return {H} 返回自身
+     * @param {string} className - 增加的类名
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.addClass = function (className) {
+    hQuery.prototype.addClass = function (className) {
         for (let i = 0; i < this.length; i++) {
             this[i].classList.add(className)
         }
@@ -428,10 +418,10 @@
 
     /**
      * 为节点去除class
-     * @param {string} className - 想去除的类名
-     * @return {H} 返回自身
+     * @param {string} className - 去除的类名
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.removeClass = function (className) {
+    hQuery.prototype.removeClass = function (className) {
         for (let i = 0; i < this.length; i++) {
             this[i].classList.remove(className)
         }
@@ -440,11 +430,11 @@
 
     /**
      * 切换class
-     * @param {string} className - 想切换的类名
+     * @param {string} className - 切换的类名
      * @param {boolen=} force - 可选切换方式，true表示增加，false表示去除
-     * @return {H} 返回自身
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.toggleClass = function (className, force) {
+    hQuery.prototype.toggleClass = function (className, force) {
         /*
             When a second argument is present:
             If the second argument evaluates to true, add specified class value,
@@ -462,9 +452,9 @@
      * 增加绑定事件
      * @param {string} event - 事件名
      * @param {function} handler - 回调函数，记得处理this绑定
-     * @return {H} 返回自身
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.on = function (event, handler) {
+    hQuery.prototype.on = function (event, handler) {
         for (let i = 0; i < this.length; i++) {
             this[i].addEventListener(event, handler);
         }
@@ -475,9 +465,9 @@
      * 去除绑定事件
      * @param {string} event - 事件名
      * @param {function} handler - 回调函数
-     * @return {H} 返回自身
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.off = function (event, handler) {
+    hQuery.prototype.off = function (event, handler) {
         for (let i = 0; i < this.length; i++) {
             this[i].removeEventListener(event, handler);
         }
@@ -488,9 +478,9 @@
      * 增加绑定事件，该事件在触发一次后会被移除
      * @param {string} event - 事件名
      * @param {function} handler - 回调函数，记得处理this绑定
-     * @return {H} 返回自身
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.one = function (event, handler) {
+    hQuery.prototype.one = function (event, handler) {
         for (let i = 0; i < this.length; i++) {
             let fn = (e) => {
                 handler(e)
@@ -507,9 +497,9 @@
     /**
      * 对每一个节点调用处理函数
      * @param {function} fn - 处理函数，如果返回false会中断后续执行
-     * @return {H} 返回自身
+     * @return {hQuery} - 返回自身
      */  
-    H.prototype.each = function (fn) {
+    hQuery.prototype.each = function (fn) {
         for (let i = 0; i < this.length; i++) {
             let val = fn.call(this[i], i, this[i])
             if (val === false) break
@@ -521,29 +511,55 @@
      * 在hQuery的原型链上扩展新的方法
      * @param {name} name - 新增的方法名
      * @param {function} fn - 新增的方法
-     * @return {H} 返回自身
      */  
-    H.extend = function (name, fn) {
+    hQuery.extend = function (name, fn) {
         if (arguments.length === 2) {
-            H.prototype[name] = fn
+            hQuery.prototype[name] = fn
         } else {
             for (let n in name) {
-                H.prototype[n] = name[n]
+                hQuery.prototype[n] = name[n]
             }
         }
     }
 
     
     // Ajex methods
-    H.get = function (url, callback) {
-        // TODO:
+
+    /**
+     * Ajax的GET方法
+     * @param {string} url - 请求资源的地址
+     * @param {function} callback - 回调函数
+     */  
+    hQuery.get = function (url, callback) {
+        let xhr = new XMLHttpRequest
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                callback(xhr)
+            }
+        }
+        xhr.open("GET", url, true)
+        xhr.send()
     }
 
-    H.post = function (url, callback) {
-
+    /**
+     * Ajax的POST方法
+     * @param {string} url - 请求资源的地址
+     * @param {form} data - POST的数据
+     * @param {function} callback - 回调函数
+     */      
+    hQuery.post = function (url, data, callback) {
+        let xhr = new XMLHttpRequest
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                callback(xhr)
+            }
+        }
+        xhr.open("POST", url, true)
+        xhr.send(data)
     }
 
     // Animations
-
+    // TODO:
 
 })(window, document);
